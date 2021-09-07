@@ -72,3 +72,33 @@ class AimMark():
 
     def draw(self):
         self._surface.blit(self.image, self.rect.move(self.pos))
+
+class PointCount:
+    def __init__(self, surface, initpos):
+        self.hit = 0
+        self.miss = 0
+        self.font = pygame.font.SysFont('Comic Sans MS', 30)
+        self.pos = initpos
+        self._surface = surface
+        
+
+    def inc_hit(self):
+        self.hit += 1
+    def inc_miss(self):
+        self.miss += 1
+    def set_pos(self, npos):
+        self.pos = npos
+
+    def draw(self):
+        srfhit = self.font.render("Hit:" + str(self.hit), False, (0,0,0))
+        srfmiss = self.font.render("Miss:" + str(self.miss), False, (0,0,0))
+
+        baserect = pygame.Rect(0,0,max(srfhit.get_width(), srfmiss.get_width()), srfhit.get_height() + srfmiss.get_height())
+        basesuf = pygame.Surface(baserect.size, SRCALPHA)
+        
+        self._surface.blit(srfhit, baserect.move(self.pos))
+        self._surface.blit(srfmiss, baserect.move(self.pos).move(0, srfhit.get_height()))
+
+
+
+        

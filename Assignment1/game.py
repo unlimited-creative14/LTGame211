@@ -25,6 +25,8 @@ class App:
         self.spawn_rate = 1.0
         self.max_zombie = len(sizes)
 
+        self.live = 3
+
     def on_init(self):
         pygame.init()
         self.last_frame_tick = pygame.time.get_ticks()
@@ -39,7 +41,9 @@ class App:
 
         self.pipes = [MPipe(sizes[i], self._display_surf, self.pos[i], self.scale) for i in range(len(sizes))]
         self.zombies = []
+
         self.aimmark = AimMark(self._display_surf, self.scale / 4)
+        self.hitcount = PointCount(self._display_surf, (0,0))
 
 
         self._running = True
@@ -49,14 +53,18 @@ class App:
         if event.type == QUIT:
             self._running = False
         elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+            hit = False
             for zombie in self.zombies:
                 if not contains(self.pipes[0].rect, event.pos) and contains(zombie.rect.move(zombie.pos), event.pos):
                     self.zombies.remove(zombie)
-                    self.point += 1
-                    print("Point: " + str(self.point))
+                    self.hitcount.inc_hit()
+                    hit = True
                     break
                 else:
                     print("Out")
+            if not hit:
+                self.hitcount.inc_miss()
+                
         elif event.type == MOUSEMOTION:
             self.aimmark.set_pos(event.pos)
 
@@ -82,6 +90,7 @@ class App:
             # remove zombie when he completely fall into pipe
             if zombie.get_true_rect().top > zombie.dest_pipe.rect.top:
                 self.zombies.remove(zombie)
+
                 print("fall out")
 
             # slow down zombie when he get into pipe
@@ -97,7 +106,9 @@ class App:
         
         [x.draw() for x in self.zombies]
         [x.draw() for x in self.pipes]    
-        self.aimmark.draw()    
+        self.aimmark.draw()  
+        self.hitcount.draw()  
+
         pygame.display.flip()
 
     def on_cleanup(self):
