@@ -18,12 +18,13 @@ class App:
 
 
         self.point = 0
-        self.default_fallspeed = 150
+        self.default_fallspeed = 175
         self.slowdown_factor = 0.5
         self.spawn_clock = 0
-        self.spawn_rate = 1.0
-        self.max_zombie = len(sizes)
+        self.spawn_rate = 1.75
+        self.max_zombie = len(sizes)*2
 
+        random.shuffle(sizes)
         self.live = 3
 
     def on_init(self):
@@ -44,6 +45,11 @@ class App:
         self.aimmark = AimMark(self._display_surf, self.scale / 4)
         self.hitcount = PointCount(self._display_surf, (0,0))
 
+        self.bg_sound = load_sound("bg_music.wav")
+        self.boom_sound = load_sound("boom.wav")
+        self.boom_sound.set_volume(0.5)
+
+        self.bg_sound.play(loops=-1)
 
         self._running = True
 
@@ -57,22 +63,20 @@ class App:
         elif event.type == MOUSEBUTTONDOWN and event.button == 1:
             hit = False
             for zombie in self.zombies:
-                if not contains(self.pipes[0].rect, event.pos) and contains(zombie.rects[zombie.index].move(zombie.pos), event.pos):
+                if not contains(zombie.dest_pipe.rect, event.pos) and contains(zombie.rects[zombie.index].move(zombie.pos), event.pos):
                     self.zombies.remove(zombie)
                     self.hitcount.inc_hit()
                     hit = True
                     # new kaboom
+                    self.boom_sound.play(maxtime=500)
                     self.kabooms.append(Kaboom(self._display_surf, self.scale * 2, 0.1, event.pos))
 
                     break
-                else:
-                    print("Out")
             if not hit:
                 self.hitcount.inc_miss()
                 
         elif event.type == MOUSEMOTION:
             self.aimmark.set_pos(event.pos)
-
 
     def on_loop(self):
         nc = pygame.time.get_ticks()
@@ -105,7 +109,7 @@ class App:
         for kaboom in self.kabooms:
             if kaboom.success == 1:
                 self.kabooms.remove(kaboom)
-            
+
         # do update them
         [x.update(self.delta_time) for x in self.zombies]
         [x.update(self.delta_time) for x in self.kabooms]
@@ -123,6 +127,7 @@ class App:
         pygame.display.flip()
 
     def on_cleanup(self):
+        self.bg_sound.stop()
         pygame.quit()
  
     def on_execute(self):

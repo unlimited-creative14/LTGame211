@@ -43,7 +43,6 @@ class Zombie:
         self.pos = (xpos, -self.rects[self.index].height)
         self.state = "falling"
 
-
     def draw(self):
         self._surface.blit(self.images[self.index], self.rects[self.index].move(self.pos))
         
