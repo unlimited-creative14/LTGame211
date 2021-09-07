@@ -3,8 +3,9 @@ from pygame.locals import *
 
 def load_img(name, scale = 1):
     """ Load image and return image object"""
-    fullname = './Assignment1/images/' + name
+    fullname = './images/' + name
     try:
+        print(fullname)
         image = pygame.image.load(fullname)
         if image.get_alpha() is None:
             image = image.convert()

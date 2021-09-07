@@ -1,6 +1,5 @@
 
 import random
-import time
 from objects import *
 
 
@@ -47,7 +46,10 @@ class App:
 
 
         self._running = True
-    
+
+        # init for boom
+        self.kabooms = []
+
  
     def on_event(self, event):
         if event.type == QUIT:
@@ -55,10 +57,13 @@ class App:
         elif event.type == MOUSEBUTTONDOWN and event.button == 1:
             hit = False
             for zombie in self.zombies:
-                if not contains(self.pipes[0].rect, event.pos) and contains(zombie.rect.move(zombie.pos), event.pos):
+                if not contains(self.pipes[0].rect, event.pos) and contains(zombie.rects[zombie.index].move(zombie.pos), event.pos):
                     self.zombies.remove(zombie)
                     self.hitcount.inc_hit()
                     hit = True
+                    # new kaboom
+                    self.kabooms.append(Kaboom(self._display_surf, self.scale * 2, 0.1, event.pos))
+
                     break
                 else:
                     print("Out")
@@ -96,16 +101,22 @@ class App:
             # slow down zombie when he get into pipe
             if zombie.get_true_rect().bottom > zombie.dest_pipe.rect.top:
                 zombie.set_fallspeed(self.slowdown_factor*self.default_fallspeed)
+
+        for kaboom in self.kabooms:
+            if kaboom.success == 1:
+                self.kabooms.remove(kaboom)
             
         # do update them
         [x.update(self.delta_time) for x in self.zombies]
+        [x.update(self.delta_time) for x in self.kabooms]
 
 
     def on_render(self):
         self._display_surf.blit(self._img_surface, (0,0))
         
         [x.draw() for x in self.zombies]
-        [x.draw() for x in self.pipes]    
+        [x.draw() for x in self.pipes]
+        [x.draw() for x in self.kabooms]
         self.aimmark.draw()  
         self.hitcount.draw()  
 
