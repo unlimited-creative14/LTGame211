@@ -1,8 +1,7 @@
-from utils.shapes.Rect import Rect
-from utils.shapes.point import Point
 import pygame
 from pygame import display
 
+from utils.shapes.shape import Rect, Circle, Point, Shape
 from utils.quadtree.quadtree import QuadTree
 from utils.quadtree.objects import *
 
@@ -46,6 +45,8 @@ class QuadTreeCollisionVisualize:
             self.collision_method = self.method1
         if event.type == pygame.KEYDOWN and event.unicode == '2':
             self.collision_method = self.method2
+        if event.type == pygame.KEYDOWN and event.unicode == '3':
+            self.collision_method = self.method3
 
     def on_loop(self):
         nc = pygame.time.get_ticks()
@@ -95,6 +96,9 @@ class QuadTreeCollisionVisualize:
         qtree = QuadTree(self.rect, 8)
         for particle in self.particles:
             qtree.insert(particle, particle.pos)
+        for particle in self.particles:
+            collision_list = qtree.query(particle.rect)
+            colors[particle] = green if len(collision_list) != 1 else white
 
     def on_cleanup(self):
         pygame.quit()

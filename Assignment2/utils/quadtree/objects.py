@@ -1,4 +1,4 @@
-from utils.shapes.point import Point
+from utils.shapes.shape import Circle, Point
 import random
 import pygame
 
@@ -8,6 +8,7 @@ class Particle:
     def  __init__(self, pos: Point):
         self.pos = pos
         self.r = 6
+        self.rect = Circle(pos, self.r)
     def move(self):
         self.pos.x += random.gauss(0, 1)
         self.pos.y += random.gauss(0, 1)

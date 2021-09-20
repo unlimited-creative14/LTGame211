@@ -3,8 +3,7 @@ from pygame.constants import MOUSEBUTTONDOWN, MOUSEMOTION
 from pygame.draw import rect
 
 from utils.quadtree.quadtree import QuadTree
-from utils.shapes.Rect import Rect
-from utils.shapes.point import Point
+from utils.shapes.shape import Rect, Point
 
 import random
 import pygame

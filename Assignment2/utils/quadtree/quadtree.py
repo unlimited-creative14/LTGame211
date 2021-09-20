@@ -1,6 +1,6 @@
 from utils.shapes.shape import Shape
 import pygame
-from utils.shapes.Rect import Rect
+from utils.shapes.shape import Rect
 
 class QuadTree:
     def __init__(self, boundary: Rect, cap):
@@ -61,7 +61,12 @@ class QuadTree:
         if not self.rect.is_overlap(rect):
             return []
 
-        found = list(filter(lambda p : rect.contains(p), self.items))
+        # if specify rect fully contains this self.rect
+        # no need to check if specify rect contains all points inside (speed up a little bit)
+        if rect.contains(self.rect):
+            found = self.items.copy()
+        else:
+            found = list(filter(lambda p : rect.contains(p), self.items))
         if self._divided:
             found.extend(self._tl.query(rect))
             found.extend(self._tr.query(rect))
