@@ -1,5 +1,4 @@
 from utils.shapes.shape import Circle, Point
-import random
 import pygame
 
 white = (255,255,255)
