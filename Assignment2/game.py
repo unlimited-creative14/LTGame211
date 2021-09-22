@@ -1,11 +1,14 @@
-from Assignment2.objects import *
+from Assignment2.utils.collision import *
 from Assignment2.utils.load_assets import *
+from Assignment2.objects import *
 
 class App:
     def __init__(self):
         self._running = True
         self.size = self.width, self.height = 400, 800
         self.player_speed = 200
+        self.moving_pos = (Point2D(30, 40), Point2D(370, 760))
+        self.y_center = self.height/2
 
     def on_init(self):
         pygame.init()
@@ -14,20 +17,41 @@ class App:
         self._display_surf = pygame.display.set_mode(self.size, pygame.HWSURFACE)
         self.image_surface = load_img("background\\background.png")[0]
 
-        self.player1 = Player(self._display_surf, Transform(Point2D(100,100), 0), 10, 0.2, 0.1)
-        self.player1_velocity = Point2D(0,0)
+        self.player1 = Player(self._display_surf, Transform(Point2D(200, 100), 180), 90, 0.2, 0.1, 1)
+        self.player1_velocity = Point2D(0, 0)
         self.player1_hit = False
+
+        self.player2 = Player(self._display_surf, Transform(Point2D(200, 700), 0), 90, 0.2, 0.1, 2)
+        self.player2_velocity = Point2D(0, 0)
+        self.player2_hit = False
+
+        self.ball = Ball(self._display_surf, Transform(Point2D(200, 200), 0))
+
+        self.left_wall = Wall(Transform(Point2D(20, 400), 0), 10, 800)
+        self.right_wall = Wall(Transform(Point2D(380, 400), 0), 10, 800)
+
+        # spatial hashmap collision
+        self.spatial_hashmap = SpatialHashmap(self.width, self.height, 10)
+        # append some object
+        self.spatial_hashmap.append_obj(self.ball)
+        self.spatial_hashmap.append_obj(self.player1)
+        self.spatial_hashmap.append_obj(self.player2)
+        self.spatial_hashmap.append_obj(self.left_wall)
+        self.spatial_hashmap.append_obj(self.right_wall)
 
         self._running = True
 
     def on_render(self):
-        self._display_surf.blit(self.image_surface, (0,0))
+        self._display_surf.blit(self.image_surface, (0, 0))
         self.player1.draw()
+        self.player2.draw()
+        self.ball.draw()
 
         pygame.display.flip()
 
     def on_event(self, events):
-        hit = False
+        player1_hit = False
+        player2_hit = False
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
@@ -39,7 +63,17 @@ class App:
                 elif event.key == pygame.K_s:
                     self.player1_velocity.y += self.player_speed
                 elif event.key == pygame.K_f:
-                    hit = True
+                    player1_hit = True
+                if event.key == pygame.K_k:
+                    self.player2_velocity.x -= self.player_speed
+                elif event.key == pygame.K_SEMICOLON:
+                    self.player2_velocity.x += self.player_speed
+                elif event.key == pygame.K_o:
+                    self.player2_velocity.y -= self.player_speed
+                elif event.key == pygame.K_l:
+                    self.player2_velocity.y += self.player_speed
+                elif event.key == pygame.K_j:
+                    player2_hit = True
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_a:
                     self.player1_velocity.x += self.player_speed
@@ -49,20 +83,60 @@ class App:
                     self.player1_velocity.y += self.player_speed
                 elif event.key == pygame.K_s:
                     self.player1_velocity.y -= self.player_speed
-        if hit:
-            self.player1_hit = True
-        else:
-            self.player1_hit = False
+                if event.key == pygame.K_k:
+                    self.player2_velocity.x += self.player_speed
+                elif event.key == pygame.K_SEMICOLON:
+                    self.player2_velocity.x -= self.player_speed
+                elif event.key == pygame.K_o:
+                    self.player2_velocity.y += self.player_speed
+                elif event.key == pygame.K_l:
+                    self.player2_velocity.y -= self.player_speed
 
+        self.player1_hit = player1_hit
+        self.player2_hit = player2_hit
 
     def on_loop(self):
+        # check collision
+        self.spatial_hashmap.calculate_collision()
+        # 0 is ball
+        self.spatial_hashmap.call_collision(0)
+        self.spatial_hashmap.clear_data()
+
         current_time = pygame.time.get_ticks()/1000
         delta_time = current_time - self.last_frame_tick
         self.last_frame_tick = current_time
+
         self.player1.move(delta_time, self.player1_velocity)
+        self.player2.move(delta_time, self.player2_velocity)
+
+        if self.player1.transform.position.x < self.moving_pos[0].x:
+            self.player1.transform.position.x = self.moving_pos[0].x
+        elif self.player1.transform.position.x > self.moving_pos[1].x:
+            self.player1.transform.position.x = self.moving_pos[1].x
+        elif self.player1.transform.position.y < self.moving_pos[0].y:
+            self.player1.transform.position.y = self.moving_pos[0].y
+        elif self.player1.transform.position.y > self.y_center - 100:
+            self.player1.transform.position.y = self.y_center - 100
+
+        if self.player2.transform.position.x < self.moving_pos[0].x:
+            self.player2.transform.position.x = self.moving_pos[0].x
+        elif self.player2.transform.position.x > self.moving_pos[1].x:
+            self.player2.transform.position.x = self.moving_pos[1].x
+        elif self.player2.transform.position.y < self.y_center + 100:
+            self.player2.transform.position.y = self.y_center + 100
+        elif self.player2.transform.position.y > self.moving_pos[1].y:
+            self.player2.transform.position.y = self.moving_pos[1].y
+
         if self.player1_hit:
             self.player1.hit()
-        self.player1.update()
+
+        if self.player2_hit:
+            self.player2.hit()
+
+        self.player1.update(current_time)
+        self.player2.update(current_time)
+
+        self.ball.update(delta_time)
 
     def on_cleanup(self):
         pygame.quit()
