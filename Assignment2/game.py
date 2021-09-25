@@ -12,7 +12,7 @@ class App:
         self.size = self.width, self.height = 400, 800
         self.player_speed = 200
         self.moving_pos = (Point2D(30, 40), Point2D(370, 760))
-        self.ball_pos = (Point2D(200, 200), Point2D(200, self.height-200))
+        self.ball_pos = (Point2D(200, 160), Point2D(200, self.height-160))
         self.y_center = self.height/2
         self.x_center = self.width/2
 
@@ -64,9 +64,9 @@ class App:
         self.score2 = Score((self.x_center, self.y_center + 30), "")
 
         # Init computer player
-        # p2ai = P2AI(self.player2, self.ball)
-        # aithread = Thread(target=P2AI.run, args=(p2ai, ))
-        # aithread.start()
+        p2ai = P2AI(self.player2, self.ball)
+        aithread = Thread(target=P2AI.run, args=(p2ai, ))
+        aithread.start()
 
         self._running = True
 
