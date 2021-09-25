@@ -78,6 +78,12 @@ class SpatialHashmap:
 
     def append_obj(self, obj):
         self.objs.append(obj)
+    
+    def pop_obj(self):
+        if len(self.objs) > 0:
+            self.objs.pop()
+            return 1
+        return 0
 
     def calculate_collision(self):
         for obj in self.objs:
@@ -96,9 +102,12 @@ class SpatialHashmap:
 
         self.objs[obj_index].collider.map(self.cell_size, check_value)
 
+        result = 0
         for obj in obj_colliders:
             print("%s -> %s" % (self.objs[obj_index].obj_type, obj.obj_type))
-            self.objs[obj_index].on_collision(obj)
+            result = self.objs[obj_index].on_collision(obj)
+        return result
+
 
     def clear_data(self):
         self.content.clear()

@@ -166,6 +166,18 @@ class Ball:
             self.dead = True
             self.hitted = False
 
+        elif collider.obj_type == "block":
+            if collider.owner * (self.transform.position.y - collider.transform.position.y) < 0 :
+                self.velocity.y = -self.velocity.y
+
+        elif collider.obj_type == "item":
+            if collider.type == "block_item":
+                # collision with block item
+                if self.velocity.y < 0:
+                    return 1
+                else:
+                    return -1
+
 class Wall:
     def __init__(self, transform: Transform, width, height):
         self.transform = transform
@@ -202,3 +214,31 @@ class Score:
 
         newpos = (self.pos[0] - lb.get_width()/2, self.pos[1] - lb.get_height()/2)
         surface.blit(lb, newpos)
+
+
+class Block:
+    def __init__(self, transfrom: Transform, width, height, owner):
+        self.obj_type = "block"
+        self.transform = transfrom
+        self.width = width
+        self.height = height
+        self.collider = BoxCollider(self.transform.position, self.width, self.height)
+        # -1 is Player 1 (on top), 1 is player 2 (on bottom)
+        self.owner = owner
+        self.draw_color = (255, 255, 0)
+    
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.draw_color, pygame.Rect(self.transform.position.x-self.width/2, self.transform.position.y-self.height/2, self.width, self.height))
+
+
+class Item:
+    def __init__(self, type, transfrom: Transform):
+        self.obj_type = "item"
+        self.type = type
+        self.transform = transfrom
+        self.collider = BoxCollider(transfrom.position, 50, 50)
+        self.block_img, self.block_rect = load_img("items//block.png")
+
+    def draw(self, surface):
+        if self.type == "block_item":
+            surface.blit(self.block_img, self.block_rect.move(self.transform.position.x - 25, self.transform.position.y - 25))
