@@ -1,14 +1,20 @@
-from Assignment2.utils.collision import *
-from Assignment2.utils.load_assets import *
-from Assignment2.objects import *
-
+from utils.collision import *
+from utils.load_assets import *
+from objects import *
+import pygame
+from pygame.locals import *
+from computer_play import P2AI
+from threading import Thread
+import threading
 class App:
     def __init__(self):
         self._running = True
         self.size = self.width, self.height = 400, 800
         self.player_speed = 200
         self.moving_pos = (Point2D(30, 40), Point2D(370, 760))
+        self.ball_pos = (Point2D(200, 200), Point2D(200, self.height-200))
         self.y_center = self.height/2
+        self.x_center = self.width/2
 
     def on_init(self):
         pygame.init()
@@ -25,11 +31,23 @@ class App:
         self.player2_velocity = Point2D(0, 0)
         self.player2_hit = False
 
-        self.ball = Ball(self._display_surf, Transform(Point2D(200, 200), 0))
+        self.ball = Ball(self._display_surf, Transform(Point2D(self.ball_pos[0].x, self.ball_pos[0].y), 0))
 
-        self.left_wall = Wall(Transform(Point2D(20, 400), 0), 10, 800)
-        self.right_wall = Wall(Transform(Point2D(380, 400), 0), 10, 800)
+        wall_height = 280
+        wall_y = 260 + wall_height/2
+        self.left_wall = Wall(Transform(Point2D(20, wall_y), 0), 10, wall_height)
+        self.right_wall = Wall(Transform(Point2D(370, wall_y), 0), 10, wall_height)
 
+        offset_y = 10
+        boundary_width = 10
+
+        self.boundaries = {
+            "top" : DeadWall(Transform(Point2D(self.x_center, offset_y), 0), self.width, boundary_width, "top"),
+            "left" : DeadWall(Transform(Point2D(0, self.y_center), 0), boundary_width, self.height, "left"),
+            "right" : DeadWall(Transform(Point2D(self.width - boundary_width/2, self.y_center), 0), boundary_width, self.height, "right"),
+            "bottom" : DeadWall(Transform(Point2D(self.x_center, self.height-boundary_width-offset_y), 0), self.width, boundary_width, "bottom")
+        }
+        
         # spatial hashmap collision
         self.spatial_hashmap = SpatialHashmap(self.width, self.height, 10)
         # append some object
@@ -39,6 +57,17 @@ class App:
         self.spatial_hashmap.append_obj(self.left_wall)
         self.spatial_hashmap.append_obj(self.right_wall)
 
+        for bd in self.boundaries.values():
+            self.spatial_hashmap.append_obj(bd)
+
+        self.score1 = Score((self.x_center, self.y_center - 30), "")
+        self.score2 = Score((self.x_center, self.y_center + 30), "")
+
+        # Init computer player
+        # p2ai = P2AI(self.player2, self.ball)
+        # aithread = Thread(target=P2AI.run, args=(p2ai, ))
+        # aithread.start()
+
         self._running = True
 
     def on_render(self):
@@ -47,6 +76,13 @@ class App:
         self.player2.draw()
         self.ball.draw()
 
+        self.left_wall.draw(self._display_surf)
+        self.right_wall.draw(self._display_surf)
+
+        for bd in self.boundaries.values():
+            bd.draw(self._display_surf)
+        self.score1.draw(self._display_surf)
+        self.score2.draw(self._display_surf)
         pygame.display.flip()
 
     def on_event(self, events):
@@ -100,11 +136,31 @@ class App:
         self.spatial_hashmap.calculate_collision()
         # 0 is ball
         self.spatial_hashmap.call_collision(0)
+        #self.spatial_hashmap.call_collision_all()
         self.spatial_hashmap.clear_data()
 
         current_time = pygame.time.get_ticks()/1000
         delta_time = current_time - self.last_frame_tick
         self.last_frame_tick = current_time
+
+        if self.ball.dead:
+            self.ball.dead = False
+            if self.ball.last_hit == "player1":
+                if self.ball.transform.position.y > self.y_center:
+                    self.score1.inc()
+                    self.ball.transform.position.x , self.ball.transform.position.y = self.ball_pos[1].x, self.ball_pos[1].y
+                else:
+                    self.score2.inc()
+                    self.ball.transform.position.x , self.ball.transform.position.y = self.ball_pos[0].x, self.ball_pos[0].y
+            elif self.ball.last_hit == "player2":
+                if self.ball.transform.position.y < self.y_center:
+                    self.score2.inc()
+                    self.ball.transform.position.x , self.ball.transform.position.y = self.ball_pos[1].x, self.ball_pos[1].y
+                else:
+                    self.score1.inc()
+                    self.ball.transform.position.x , self.ball.transform.position.y = self.ball_pos[0].x, self.ball_pos[0].y
+            self.spatial_hashmap.clear_data()
+            
 
         self.player1.move(delta_time, self.player1_velocity)
         self.player2.move(delta_time, self.player2_velocity)

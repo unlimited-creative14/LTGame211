@@ -1,4 +1,4 @@
-from Assignment2.utils.transform import *
+from .transform import *
 
 class BoxCollider:
     def __init__(self, center: Point2D, width, height, enable=True):
@@ -89,7 +89,7 @@ class SpatialHashmap:
         obj_colliders = []
 
         def check_value(i, j):
-            if len(self.content.get((i, j))) > 1:
+            if self.content.get((i, j)) and len(self.content.get((i, j))) > 1:
                 for obj in self.content.get((i, j)):
                     if obj != self.objs[obj_index] and obj not in obj_colliders:
                         obj_colliders.append(obj)
@@ -97,13 +97,12 @@ class SpatialHashmap:
         self.objs[obj_index].collider.map(self.cell_size, check_value)
 
         for obj in obj_colliders:
-            print(obj.obj_type)
+            print("%s -> %s" % (self.objs[obj_index].obj_type, obj.obj_type))
             self.objs[obj_index].on_collision(obj)
 
     def clear_data(self):
         self.content.clear()
 
-
-
-
-
+    def call_collision_all(self):
+        for i in range(len(self.objs)):
+            self.call_collision(i)

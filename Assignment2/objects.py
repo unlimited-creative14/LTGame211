@@ -1,8 +1,8 @@
 import math
 import pygame.time
-from Assignment2.utils.collision import CircleCollier, BoxCollider
-from Assignment2.utils.load_assets import load_img
-from Assignment2.utils.transform import *
+from utils.collision import CircleCollier, BoxCollider
+from utils.load_assets import load_img
+from utils.transform import *
 
 
 class Player:
@@ -72,7 +72,7 @@ class Player:
 
 
 class Ball:
-    def __init__(self, surface, transform: Transform, a=-0.3, scale=1, vmax=1):
+    def __init__(self, surface, transform: Transform, a=-30, scale=1, vmax=400):
         self.vmax = vmax
         self.obj_type = "ball"
         self.scale = scale
@@ -80,25 +80,37 @@ class Ball:
         self.transform = transform
         self.idle, self.fly = load_img('ball\\ball.png'), load_img('ball\\ball_flying.png')
         self.is_flying = False
-        self.velocity = Point2D(0, 0)
+        self.velocity = Point2D(0.0001, 0.00001)
         self.a = a
 
         self.collider = CircleCollier(self.transform.position, 10)
         self.hitted = False
         self.hit_time = 0
 
+        self.dead = False
+        self.last_hit = ""
+
     def update(self, delta_time):
         if self.hitted:
             self.hit_time += delta_time
-            if self.hit_time > 0.5:
+            if self.hit_time > 0.2:
                 self.hitted = False
 
-        if abs(self.velocity.x) < 0.01 and abs(self.velocity.y) < 0.01:
+        if abs(self.velocity.x) < 0.1 and abs(self.velocity.y) < 0.1:
             self.is_flying = False
         if self.is_flying:
-            a_x, a_y = self.a * self.velocity.x * 2, self.a * self.velocity.y * 2
-            self.velocity.x, self.velocity.y = self.velocity.x + a_x * delta_time, self.velocity.y + a_y * delta_time
-            self.transform.translate(self.velocity.x, self.velocity.y)
+            try:
+                angle = 270 - math.atan(self.velocity.y / self.velocity.x) * 180 / 3.1416 - (
+                    180 if self.velocity.x < 0 else 0)
+            except:
+                angle = 270 - (180 if self.velocity.x < 0 else 0)
+            a_y, a_x = self.a * math.sin(angle), self.a*math.cos(angle)
+            #a_x, a_y = self.a * self.velocity.x / self.vmax, self.a * self.velocity.y / self.vmax
+            self.velocity.x = self.vmax if self.velocity.x >= self.vmax else self.velocity.x + a_x * delta_time
+            self.velocity.y = self.vmax if self.velocity.y >= self.vmax else self.velocity.y + a_y * delta_time
+            
+            #self.velocity.x, self.velocity.y = self.velocity.x + a_x * delta_time, self.velocity.y + a_y * delta_time
+            self.transform.translate(self.velocity.x * delta_time, self.velocity.y * delta_time)
 
     def draw(self):
         angle = 0 if self.velocity.y <= 0 else 180
@@ -129,23 +141,30 @@ class Ball:
             # if the ball is lower than the player 1
             if self.transform.position.y > collider.transform.position.y:
                 x_value = self.vmax * (self.transform.position.x - collider.transform.position.x) / collider.radius
-                y_value = math.sqrt(self.vmax ** 2 - x_value ** 2)
+                y_value = math.sqrt(abs(self.vmax ** 2 - x_value ** 2))
                 self.velocity.x, self.velocity.y = x_value, y_value
                 self.is_flying = True
+                self.last_hit = "player1"
 
         # player 2 hit a ball
         elif collider.obj_type == "player2":
             # if the ball is lower than the player 2
             if self.transform.position.y < collider.transform.position.y:
                 x_value = self.vmax * (self.transform.position.x - collider.transform.position.x) / collider.radius
-                y_value = -math.sqrt(self.vmax ** 2 - x_value ** 2)
+                y_value = -math.sqrt(abs(self.vmax ** 2 - x_value ** 2))
                 self.velocity.x, self.velocity.y = x_value, y_value
                 self.is_flying = True
+                self.last_hit = "player2"
 
         # collision with the wall
         elif collider.obj_type == "wall":
             print("wall")
             self.velocity.x = -self.velocity.x
+            self.hitted = True
+        elif collider.obj_type == "deadwall":
+            self.velocity = Point2D(0,0)
+            self.dead = True
+            self.hitted = False
 
 class Wall:
     def __init__(self, transform: Transform, width, height):
@@ -154,6 +173,32 @@ class Wall:
         self.height = height
         self.obj_type = "wall"
         self.collider = BoxCollider(transform.position, self.width, self.height)
-
+        self.draw_color = (0,255,0)
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.draw_color, pygame.Rect(self.transform.position.x-self.width/2, self.transform.position.y-self.height/2, self.width, self.height))
     def on_collision(self, collider):
         pass
+
+
+class DeadWall(Wall):
+    def __init__(self, transform: Transform, width, height, side):
+        super().__init__(transform, width, height)
+        self.side = side
+        self.obj_type = "deadwall"
+        self.draw_color = (255,0,0)
+    
+    def on_collision(self, collider):
+        pass
+class Score:
+    def __init__(self, pos, label):
+        self.pos = pos
+        self.count = 0
+        self.label = label
+    def inc(self):
+        self.count += 1
+    def draw(self, surface):
+        font = pygame.font.SysFont("anyfont", 39)
+        lb = font.render(self.label + str(self.count), True, (255,255,255))
+
+        newpos = (self.pos[0] - lb.get_width()/2, self.pos[1] - lb.get_height()/2)
+        surface.blit(lb, newpos)
