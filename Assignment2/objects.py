@@ -18,13 +18,13 @@ class Player:
 
         self.idles = []
         for i in range(0, 4):
-            image, rect = load_img("character\\idle\\idle" + str(i + 1) + '.png')
+            image, rect = load_img("character/idle/idle" + str(i + 1) + '.png')
             image = pygame.transform.rotate(image, self.transform.rotation)
             self.idles.append((image, rect))
 
         self.hits = []
         for i in range(0, 8):
-            image, rect = load_img("character\\hit\\hit" + str(i + 1) + '.png')
+            image, rect = load_img("character/hit/hit" + str(i + 1) + '.png')
             image = pygame.transform.rotate(image, self.transform.rotation)
             self.hits.append((image, rect))
 
@@ -111,7 +111,7 @@ class Ball:
 
         if self.hitted:
             self.hit_time += delta_time
-            if self.hit_time > 0.2:
+            if self.hit_time > 0.1:
                 self.hitted = False
 
         if abs(self.velocity.x) < 0.1 and abs(self.velocity.y) < 0.1:
@@ -204,8 +204,10 @@ class Ball:
 
         # collision with the wall
         elif collider.obj_type == "wall":
-            print("wall")
-            self.velocity.x = -self.velocity.x
+            if abs(self.velocity.x) < 20:
+                self.velocity.y = -self.velocity.y
+            else:
+                self.velocity.x = -self.velocity.x
             self.hitted = True
         elif collider.obj_type == "deadwall":
             self.velocity = Point2D(0,0)
@@ -213,7 +215,7 @@ class Ball:
             self.hitted = False
 
         elif collider.obj_type == "block":
-            if collider.owner * (self.transform.position.y - collider.transform.position.y) < 0 :
+            if collider.owner * self.velocity.y > 0 :
                 self.velocity.y = -self.velocity.y
 
         elif collider.obj_type == "item":

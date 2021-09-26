@@ -23,7 +23,7 @@ class App:
         self.last_frame_tick = pygame.time.get_ticks()/1000
 
         self._display_surf = pygame.display.set_mode(self.size, pygame.HWSURFACE)
-        self.image_surface = load_img("background\\background.png")[0]
+        self.image_surface = load_img("background/background.png")[0]
 
         self.player1 = Player(self._display_surf, Transform(Point2D(200, 100), 180), 90, 0.2, 0.1, 1)
         self.player1_velocity = Point2D(0, 0)
@@ -40,15 +40,15 @@ class App:
         self.left_wall = Wall(Transform(Point2D(20, wall_y), 0), 10, wall_height)
         self.right_wall = Wall(Transform(Point2D(370, wall_y), 0), 10, wall_height)
 
-        offset_y = 10
-        boundary_width = 10
+        # offset_y = 10
+        # boundary_width = 10
 
-        self.boundaries = {
-            "top" : DeadWall(Transform(Point2D(self.x_center, offset_y), 0), self.width, boundary_width, "top"),
-            "left" : DeadWall(Transform(Point2D(0, self.y_center), 0), boundary_width, self.height, "left"),
-            "right" : DeadWall(Transform(Point2D(self.width - boundary_width/2, self.y_center), 0), boundary_width, self.height, "right"),
-            "bottom" : DeadWall(Transform(Point2D(self.x_center, self.height-boundary_width-offset_y), 0), self.width, boundary_width, "bottom")
-        }
+        # self.boundaries = {
+        #     "top" : DeadWall(Transform(Point2D(self.x_center, offset_y), 0), self.width, boundary_width, "top"),
+        #     "left" : DeadWall(Transform(Point2D(0, self.y_center), 0), boundary_width, self.height, "left"),
+        #     "right" : DeadWall(Transform(Point2D(self.width - boundary_width/2, self.y_center), 0), boundary_width, self.height, "right"),
+        #     "bottom" : DeadWall(Transform(Point2D(self.x_center, self.height-boundary_width-offset_y), 0), self.width, boundary_width, "bottom")
+        # }
 
         self.items = []
         self.block = None
@@ -62,8 +62,8 @@ class App:
         self.spatial_hashmap.append_obj(self.left_wall)
         self.spatial_hashmap.append_obj(self.right_wall)
 
-        for bd in self.boundaries.values():
-            self.spatial_hashmap.append_obj(bd)
+        # for bd in self.boundaries.values():
+        #     self.spatial_hashmap.append_obj(bd)
 
 
         self.score1 = Score((self.x_center, self.y_center - 30), "")
@@ -85,8 +85,8 @@ class App:
         self.left_wall.draw(self._display_surf)
         self.right_wall.draw(self._display_surf)
 
-        for bd in self.boundaries.values():
-            bd.draw(self._display_surf)
+        # for bd in self.boundaries.values():
+        #     bd.draw(self._display_surf)
         self.score1.draw(self._display_surf)
         self.score2.draw(self._display_surf)
 
@@ -245,7 +245,19 @@ class App:
                 self.spatial_hashmap.append_obj(self.items[len(self.items) - 1])
             self.start_random_item = current_time
             
+        # check ball dead
+        if self.ball.transform.position.x < - 1 or self.ball.transform.position.x > 400 or self.ball.transform.position.y < -1 or self.ball.transform.position.y > self.height + 1 :
+            # reset ball
+            self.ball.dead = True
+            self.ball.velocity = Point2D(0,0)
+            self.ball.hitted = False
             
+            # reset player status
+            self.player1.is_hitting = False
+            self.player1.collider.enable = False
+
+            self.player2.is_hitting = False
+            self.player2.collider.enable = False
 
     def on_cleanup(self):
         pygame.quit()
