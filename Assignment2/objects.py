@@ -78,7 +78,7 @@ class Ball:
         self.scale = scale
         self._surface = surface
         self.transform = transform
-        self.idle, self.fly = load_img('ball\\ball.png'), load_img('ball\\ball_flying.png')
+        self.idle, self.fly, self.fire, self.swirl, self.fire_swirl = load_img('ball/ball.png'), load_img('ball/ball_flying.png'), load_img('ball/ball_firing.png'), load_img('ball/ball_swirl.png'),load_img('ball/ball_fire_swirl.png')
         self.is_flying = False
         self.velocity = Point2D(0.0001, 0.00001)
         self.a = a
@@ -90,7 +90,25 @@ class Ball:
         self.dead = False
         self.last_hit = ""
 
+        self.firing = False
+        self.item_time = 15
+
+        self.swirling = False
+        self.vx_swirling = 0
+
+        # index 0 for speed up item
+        # index 1 for swirl item
+        self.item_remaining_time = [0, 0]
+
     def update(self, delta_time):
+        # update speedup status
+        self.item_remaining_time[0] -= delta_time
+        self.item_remaining_time[1] -= delta_time
+        if self.item_remaining_time[0] < 0 and self.firing == True:
+            self.normalspeed()
+        if self.item_remaining_time[1] < 0 and self.swirling == True:
+            self.swirling = False
+
         if self.hitted:
             self.hit_time += delta_time
             if self.hit_time > 0.2:
@@ -98,17 +116,26 @@ class Ball:
 
         if abs(self.velocity.x) < 0.1 and abs(self.velocity.y) < 0.1:
             self.is_flying = False
+
         if self.is_flying:
-            try:
-                angle = 270 - math.atan(self.velocity.y / self.velocity.x) * 180 / 3.1416 - (
-                    180 if self.velocity.x < 0 else 0)
-            except:
-                angle = 270 - (180 if self.velocity.x < 0 else 0)
-            a_y, a_x = self.a * math.sin(angle), self.a*math.cos(angle)
-            #a_x, a_y = self.a * self.velocity.x / self.vmax, self.a * self.velocity.y / self.vmax
-            self.velocity.x = self.vmax if self.velocity.x >= self.vmax else self.velocity.x + a_x * delta_time
-            self.velocity.y = self.vmax if self.velocity.y >= self.vmax else self.velocity.y + a_y * delta_time
-            
+
+            if self.swirling == True:
+                if self.velocity.y > 0:
+                    self.velocity.x = -self.vx_swirling * ((self.transform.position.y - 400) / 400) * self.vmax * delta_time
+                else:
+                    self.velocity.x = self.vx_swirling * ((self.transform.position.y - 400) / 400) * self.vmax * delta_time
+                self.velocity.y += self.a/2 * delta_time
+            else:
+                try:
+                    angle = 270 - math.atan(self.velocity.y / self.velocity.x) * 180 / 3.1416 - (
+                        180 if self.velocity.x < 0 else 0)
+                except:
+                    angle = 270 - (180 if self.velocity.x < 0 else 0)
+                a_y, a_x = self.a * math.sin(angle), self.a*math.cos(angle)
+                #a_x, a_y = self.a * self.velocity.x / self.vmax, self.a * self.velocity.y / self.vmax
+                self.velocity.x = self.vmax if self.velocity.x >= self.vmax else self.velocity.x + a_x * delta_time
+                self.velocity.y = self.vmax if self.velocity.y >= self.vmax else self.velocity.y + a_y * delta_time
+
             #self.velocity.x, self.velocity.y = self.velocity.x + a_x * delta_time, self.velocity.y + a_y * delta_time
             self.transform.translate(self.velocity.x * delta_time, self.velocity.y * delta_time)
 
@@ -120,9 +147,26 @@ class Ball:
                 180 if self.velocity.x < 0 else 0)
         # draw image
         if self.is_flying:
-            image = pygame.transform.rotate(self.fly[0], angle)
-            self._surface.blit(image, self.fly[1].move(self.transform.position.x - 20 * self.scale,
+            if self.firing and self.swirling:
+                image = pygame.transform.rotate(self.fire_swirl[0], angle)
+                self._surface.blit(image, self.fire_swirl[1].move(self.transform.position.x - 20 * self.scale,
                                                        self.transform.position.y - 20 * self.scale))
+
+            elif self.firing:
+                image = pygame.transform.rotate(self.fire[0], angle)
+                self._surface.blit(image, self.fire[1].move(self.transform.position.x - 20 * self.scale,
+                                                       self.transform.position.y - 20 * self.scale))
+            
+            elif self.swirling:
+                image = pygame.transform.rotate(self.swirl[0], angle)
+                self._surface.blit(image, self.swirl[1].move(self.transform.position.x - 20 * self.scale,
+                                                       self.transform.position.y - 20 * self.scale))
+
+            else:
+                image = pygame.transform.rotate(self.fly[0], angle)
+                self._surface.blit(image, self.fly[1].move(self.transform.position.x - 20 * self.scale,
+                                                       self.transform.position.y - 20 * self.scale))
+
         else:
             image = pygame.transform.rotate(self.idle[0], angle)
             self._surface.blit(image, self.idle[1].move(self.transform.position.x - 20 * self.scale,
@@ -143,6 +187,7 @@ class Ball:
                 x_value = self.vmax * (self.transform.position.x - collider.transform.position.x) / collider.radius
                 y_value = math.sqrt(abs(self.vmax ** 2 - x_value ** 2))
                 self.velocity.x, self.velocity.y = x_value, y_value
+                self.vx_swirling = x_value
                 self.is_flying = True
                 self.last_hit = "player1"
 
@@ -153,6 +198,7 @@ class Ball:
                 x_value = self.vmax * (self.transform.position.x - collider.transform.position.x) / collider.radius
                 y_value = -math.sqrt(abs(self.vmax ** 2 - x_value ** 2))
                 self.velocity.x, self.velocity.y = x_value, y_value
+                self.vx_swirling = x_value
                 self.is_flying = True
                 self.last_hit = "player2"
 
@@ -177,6 +223,27 @@ class Ball:
                     return 1
                 else:
                     return -1
+            elif collider.type == "speedup_item":
+                self.speedup()
+                return 2
+            elif collider.type == "swirl_item":
+                self.swirling = True
+                self.item_remaining_time[1] = self.item_time
+                return 3
+
+    def speedup(self):
+        if self.firing == False:
+            self.firing = True
+            self.vmax *= 1.5
+            self.velocity.y *= 1.5
+            self.velocity.x *= 1.5
+            self.item_remaining_time[0] = self.item_time
+            return 1
+        return 0
+    
+    def normalspeed(self):
+        self.firing = False
+        self.vmax /= 1.5
 
 class Wall:
     def __init__(self, transform: Transform, width, height):
@@ -217,7 +284,7 @@ class Score:
 
 
 class Block:
-    def __init__(self, transfrom: Transform, width, height, owner):
+    def __init__(self, transfrom: Transform, width, height, owner, start_tick):
         self.obj_type = "block"
         self.transform = transfrom
         self.width = width
@@ -226,6 +293,7 @@ class Block:
         # -1 is Player 1 (on top), 1 is player 2 (on bottom)
         self.owner = owner
         self.draw_color = (255, 255, 0)
+        self.start_tick = start_tick
     
     def draw(self, surface):
         pygame.draw.rect(surface, self.draw_color, pygame.Rect(self.transform.position.x-self.width/2, self.transform.position.y-self.height/2, self.width, self.height))
@@ -237,8 +305,18 @@ class Item:
         self.type = type
         self.transform = transfrom
         self.collider = BoxCollider(transfrom.position, 50, 50)
-        self.block_img, self.block_rect = load_img("items//block.png")
+        self.block_img, self.block_rect = load_img("items/block.png")
+        self.speedup_img, self.speedup_rect = load_img("items/lighting.png")
+        self.swirl_img, self.swirl_rect = load_img("items/swirl_item.png")
 
     def draw(self, surface):
         if self.type == "block_item":
             surface.blit(self.block_img, self.block_rect.move(self.transform.position.x - 25, self.transform.position.y - 25))
+
+        elif self.type == "speedup_item":
+            surface.blit(self.speedup_img, self.speedup_rect.move(self.transform.position.x - 25, self.transform.position.y - 25))
+
+        elif self.type == "swirl_item":
+            surface.blit(self.swirl_img, self.swirl_rect.move(self.transform.position.x - 25, self.transform.position.y - 25))
+            
+

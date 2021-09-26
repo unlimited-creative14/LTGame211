@@ -51,6 +51,7 @@ class App:
         }
 
         self.items = []
+        self.block = None
         
         # spatial hashmap collision
         self.spatial_hashmap = SpatialHashmap(self.width, self.height, 10)
@@ -91,6 +92,9 @@ class App:
 
         for item in self.items:
             item.draw(self._display_surf)
+
+        if self.block != None:
+            self.block.draw(self._display_surf)
 
         pygame.display.flip()
 
@@ -141,29 +145,37 @@ class App:
         self.player2_hit = player2_hit
 
     def on_loop(self):
+        current_time = pygame.time.get_ticks()/1000
+        delta_time = current_time - self.last_frame_tick
+        self.last_frame_tick = current_time
+
         # check collision
         self.spatial_hashmap.calculate_collision()
         # 0 is ball
         collsion_result = self.spatial_hashmap.call_collision(0) 
         if collsion_result in [-1, 1]:
-            print(collsion_result)
             # remove block item
             self.items.pop()
             self.spatial_hashmap.pop_obj()
             # append new block object
             # -1 if owner is player 1 (on top) , 1 if owner is player 2 (on bottom)
             if collsion_result == 1:
-                self.items.append(Block(Transform(Point2D(150, 500), 0), 60, 20, 1))
+                self.block = Block(Transform(Point2D(150, 500), 0), 60, 20, 1, current_time)
             else:
-                self.items.append(Block(Transform(Point2D(150, 300), 0), 60, 20, -1))
-            self.spatial_hashmap.append_obj(self.items[len(self.items) - 1])
+                self.block = Block(Transform(Point2D(150, 300), 0), 60, 20, -1, current_time)
+            self.spatial_hashmap.append_obj(self.block)
+            # reset start random time
+            self.start_random_item = current_time
+
+        elif collsion_result in [2, 3]:
+            # remove speed up item
+            self.items.pop()
+            self.spatial_hashmap.pop_obj()
+            self.start_random_item = current_time
+
 
         #self.spatial_hashmap.call_collision_all()
         self.spatial_hashmap.clear_data()
-
-        current_time = pygame.time.get_ticks()/1000
-        delta_time = current_time - self.last_frame_tick
-        self.last_frame_tick = current_time
 
         if self.ball.dead:
             self.ball.dead = False
@@ -217,12 +229,22 @@ class App:
         self.ball.update(delta_time)
 
         # random item
-        if current_time - self.start_random_item > 5:
-            if random.randint(0,5) == 0:
-                if len(self.items) == 0:
-                    # new block item
-                    self.items.append(Item("block_item", Transform(Point2D(275,400), 0)))
-                    self.spatial_hashmap.append_obj(self.items[0])
+        if current_time - self.start_random_item > 10 and len(self.items) == 0:
+            rand = random.randint(0, 2)
+            if rand == 0 and self.block == None:
+                # new block item
+                self.items.append(Item("block_item", Transform(Point2D(225,400), 0)))
+                self.spatial_hashmap.append_obj(self.items[0])
+            elif rand == 1:
+                # rand speed up
+                self.items.append(Item("speedup_item", Transform(Point2D(225,400), 0)))
+                self.spatial_hashmap.append_obj(self.items[len(self.items) - 1])
+            elif rand == 2:
+                # rand swirl item
+                self.items.append(Item("swirl_item", Transform(Point2D(225,400), 0)))
+                self.spatial_hashmap.append_obj(self.items[len(self.items) - 1])
+            self.start_random_item = current_time
+            
             
 
     def on_cleanup(self):
