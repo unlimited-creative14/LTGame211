@@ -189,10 +189,10 @@ class App:
             elif self.ball.last_hit == "player2":
                 if self.ball.transform.position.y < self.y_center:
                     self.score2.inc()
-                    self.ball.transform.position.x , self.ball.transform.position.y = self.ball_pos[1].x, self.ball_pos[1].y
+                    self.ball.transform.position.x , self.ball.transform.position.y = self.ball_pos[0].x, self.ball_pos[0].y
                 else:
                     self.score1.inc()
-                    self.ball.transform.position.x , self.ball.transform.position.y = self.ball_pos[0].x, self.ball_pos[0].y
+                    self.ball.transform.position.x , self.ball.transform.position.y = self.ball_pos[1].x, self.ball_pos[1].y
             self.spatial_hashmap.clear_data()
             
 
