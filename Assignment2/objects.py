@@ -6,7 +6,7 @@ from utils.transform import *
 
 
 class Player:
-    def __init__(self, surface, transform: Transform, r, idle_animate, hit_animate, side, scale=1):
+    def __init__(self, surface, transform: Transform, r, idle_animate, hit_animate, side, scale=1, is_bot = False):
         self.obj_type = "player" + str(side)
         self.scale = scale
         self._surface = surface
@@ -15,6 +15,7 @@ class Player:
         self.idle_animate = idle_animate
         self.hit_animate = hit_animate
         self.collider = CircleCollier(self.transform.position, self.radius, False)
+        self.is_bot = is_bot
 
         self.idles = []
         for i in range(0, 4):
@@ -57,7 +58,12 @@ class Player:
         # idle animation index
         self.idle_index = int(current_time / self.idle_animate) % 4
 
+    def get_player_name(self):
+        return "bot" if self.is_bot else self.obj_type
+
     def draw(self):
+        lbpname = Text((self.transform.position.x - 10, self.transform.position.y-60), self.get_player_name(), 20)
+        lbpname.draw(self._surface)
         if self.is_hitting:
             self._surface.blit(self.hits[self.hit_index][0],
                                self.hits[self.hit_index][1].move(self.transform.position.x - 128 * self.scale,
@@ -259,17 +265,6 @@ class Wall:
         pygame.draw.rect(surface, self.draw_color, pygame.Rect(self.transform.position.x-self.width/2, self.transform.position.y-self.height/2, self.width, self.height))
     def on_collision(self, collider):
         pass
-
-
-class DeadWall(Wall):
-    def __init__(self, transform: Transform, width, height, side):
-        super().__init__(transform, width, height)
-        self.side = side
-        self.obj_type = "deadwall"
-        self.draw_color = (255,0,0)
-    
-    def on_collision(self, collider):
-        pass
 class Score:
     def __init__(self, pos, label):
         self.pos = pos
@@ -284,6 +279,22 @@ class Score:
         newpos = (self.pos[0] - lb.get_width()/2, self.pos[1] - lb.get_height()/2)
         surface.blit(lb, newpos)
 
+class Text:
+    def __init__(self, pos, text, size):
+        self.pos = pos
+        self.txt = text
+        self.size = size
+    def set_text(self, text):
+        self.txt = text
+    def get_rect(self):
+        font = pygame.font.SysFont("anyfont", self.size)
+        return font.render(self.txt, True, (255,255,255)).get_rect()
+    
+    def draw(self, surface):
+        font = pygame.font.SysFont("anyfont", self.size)
+        lb = font.render(self.txt, True, (255,255,255))
+
+        surface.blit(lb, self.pos)
 
 class Block:
     def __init__(self, transfrom: Transform, width, height, owner, start_tick):
@@ -321,4 +332,22 @@ class Item:
         elif self.type == "swirl_item":
             surface.blit(self.swirl_img, self.swirl_rect.move(self.transform.position.x - 25, self.transform.position.y - 25))
             
+class Button:
+    def __init__(self, pos,w,h, txt:Text):
+        self.txt = txt
+        self.pos = pos
+        self.w, self.h = w,h
+        self.cb = None
 
+    def check_click(self, click_pos):
+        if self.pos[0] > click_pos[0] or self.pos[0] + self.w < click_pos[0]:
+            return False
+        if self.pos[1] > click_pos[1] or self.pos[1] + self.h < click_pos[1]:
+            return False
+        print("%s clicked" % self.txt.txt)
+        return self.cb()
+    def set_callback(self, cb):
+        self.cb = cb
+    def draw(self, surface):
+        pygame.draw.rect(surface,(0,0,0), pygame.Rect(self.pos, (self.w,self.h)))
+        self.txt.draw(surface)

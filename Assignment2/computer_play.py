@@ -14,6 +14,7 @@ class P2AI:
 
         # -1 : move left, 0 : don't move, 1: moveright
         self.moving = 0
+        self.running = True
 
     def form_vector(self, p1, p2):
         dx = p2.x - p1.x
@@ -27,7 +28,7 @@ class P2AI:
 
     def run(self):
         wating = False
-        while True:
+        while self.running:
             if self.ball.transform.position.y == 640 and not wating:
                 time.sleep(.5)
                 wating = True

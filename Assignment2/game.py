@@ -6,9 +6,13 @@ from pygame.locals import *
 from computer_play import P2AI
 from threading import Thread
 import threading
+import winnerscene
+import homescene
 import random
 class App:
-    def __init__(self):
+    def __init__(self, p2b):
+        self.p2b = p2b
+
         self._running = True
         self.size = self.width, self.height = 400, 800
         self.player_speed = 200
@@ -17,19 +21,22 @@ class App:
         self.y_center = self.height/2
         self.x_center = self.width/2
         self.start_random_item = pygame.time.get_ticks()/1000
+        self._display_surf = pygame.display.set_mode(self.size, pygame.HWSURFACE)
+        self.image_surface = load_img("background/background.png")[0]
+        # GameEnd
+        self.winner = "None"
+
+        self.win_point = 3
 
     def on_init(self):
         pygame.init()
         self.last_frame_tick = pygame.time.get_ticks()/1000
 
-        self._display_surf = pygame.display.set_mode(self.size, pygame.HWSURFACE)
-        self.image_surface = load_img("background/background.png")[0]
-
         self.player1 = Player(self._display_surf, Transform(Point2D(200, 100), 180), 90, 0.2, 0.1, 1)
         self.player1_velocity = Point2D(0, 0)
         self.player1_hit = False
 
-        self.player2 = Player(self._display_surf, Transform(Point2D(200, 700), 0), 90, 0.2, 0.1, 2)
+        self.player2 = Player(self._display_surf, Transform(Point2D(200, 700), 0), 90, 0.2, 0.1, 2, is_bot=self.p2b)
         self.player2_velocity = Point2D(0, 0)
         self.player2_hit = False
 
@@ -39,16 +46,6 @@ class App:
         wall_y = 260 + wall_height/2
         self.left_wall = Wall(Transform(Point2D(20, wall_y), 0), 10, wall_height)
         self.right_wall = Wall(Transform(Point2D(370, wall_y), 0), 10, wall_height)
-
-        # offset_y = 10
-        # boundary_width = 10
-
-        # self.boundaries = {
-        #     "top" : DeadWall(Transform(Point2D(self.x_center, offset_y), 0), self.width, boundary_width, "top"),
-        #     "left" : DeadWall(Transform(Point2D(0, self.y_center), 0), boundary_width, self.height, "left"),
-        #     "right" : DeadWall(Transform(Point2D(self.width - boundary_width/2, self.y_center), 0), boundary_width, self.height, "right"),
-        #     "bottom" : DeadWall(Transform(Point2D(self.x_center, self.height-boundary_width-offset_y), 0), self.width, boundary_width, "bottom")
-        # }
 
         self.items = []
         self.block = None
@@ -62,17 +59,14 @@ class App:
         self.spatial_hashmap.append_obj(self.left_wall)
         self.spatial_hashmap.append_obj(self.right_wall)
 
-        # for bd in self.boundaries.values():
-        #     self.spatial_hashmap.append_obj(bd)
-
-
         self.score1 = Score((self.x_center, self.y_center - 30), "")
         self.score2 = Score((self.x_center, self.y_center + 30), "")
 
         # Init computer player
-        p2ai = P2AI(self.player2, self.ball)
-        aithread = Thread(target=P2AI.run, args=(p2ai, ))
-        aithread.start()
+        if self.p2b:
+            self.p2ai = P2AI(self.player2, self.ball)
+            self.aithread = Thread(target=P2AI.run, args=(self.p2ai, ))
+            self.aithread.start()
 
         self._running = True
 
@@ -85,8 +79,6 @@ class App:
         self.left_wall.draw(self._display_surf)
         self.right_wall.draw(self._display_surf)
 
-        # for bd in self.boundaries.values():
-        #     bd.draw(self._display_surf)
         self.score1.draw(self._display_surf)
         self.score2.draw(self._display_surf)
 
@@ -140,7 +132,7 @@ class App:
                     self.player2_velocity.y += self.player_speed
                 elif event.key == pygame.K_l:
                     self.player2_velocity.y -= self.player_speed
-
+                
         self.player1_hit = player1_hit
         self.player2_hit = player2_hit
 
@@ -148,6 +140,16 @@ class App:
         current_time = pygame.time.get_ticks()/1000
         delta_time = current_time - self.last_frame_tick
         self.last_frame_tick = current_time
+        
+        # check win
+        if self.score1.count >= self.win_point:
+            self._running = False
+            self.winner = self.player1.get_player_name()
+            return
+        if self.score2.count >= self.win_point:
+            self._running = False
+            self.winner = self.player2.get_player_name()
+            return
 
         # check collision
         self.spatial_hashmap.calculate_collision()
@@ -179,6 +181,8 @@ class App:
 
         if self.ball.dead:
             self.ball.dead = False
+            self.block = None
+
             if self.ball.last_hit == "player1":
                 if self.ball.transform.position.y > self.y_center:
                     self.score1.inc()
@@ -260,21 +264,28 @@ class App:
             self.player2.collider.enable = False
 
     def on_cleanup(self):
-        pygame.quit()
+        if self.p2b:
+            self.p2ai.running = False
+
+        # switch to winner scene
+        ws = winnerscene.WinnerScene(self)
+        ws.on_execute()
 
     def on_execute(self):
         if self.on_init() == False:
             self._running = False
 
         while self._running:
-            # for event in pygame.event.get():
-            #     self.on_event(event)
             self.on_event(pygame.event.get())
             self.on_loop()
             self.on_render()
+                
         self.on_cleanup()
 
+
+
 if __name__ == '__main__':
-    app = App()
+    app = homescene.HomeScene()
     app.on_execute()
+        
 
