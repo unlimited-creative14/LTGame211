@@ -290,11 +290,11 @@ class Text:
         font = pygame.font.SysFont("anyfont", self.size)
         return font.render(self.txt, True, (255,255,255)).get_rect()
     
-    def draw(self, surface):
+    def draw(self, surface, offset=(0,0)):
         font = pygame.font.SysFont("anyfont", self.size)
         lb = font.render(self.txt, True, (255,255,255))
 
-        surface.blit(lb, self.pos)
+        surface.blit(lb, (self.pos[0]+offset[0], self.pos[1] + offset[1]))
 
 class Block:
     def __init__(self, transfrom: Transform, width, height, owner, start_tick):
@@ -350,4 +350,4 @@ class Button:
         self.cb = cb
     def draw(self, surface):
         pygame.draw.rect(surface,(0,0,0), pygame.Rect(self.pos, (self.w,self.h)))
-        self.txt.draw(surface)
+        self.txt.draw(surface, (self.w/2-self.txt.get_rect().w/2, self.h/2-self.txt.get_rect().h/2))

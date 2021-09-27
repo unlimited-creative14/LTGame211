@@ -12,14 +12,18 @@ class HomeScene:
         self.next_scene = None
 
     def on_init(self):
+        w, h = 200, 50
+        btn2player_pos = (self.center[0]-w/2, self.center[1])
+        btnbotplayer_pos = (self.center[0]-w/2, self.center[1] + 100)
+
         self.btn2Player =  Button(
-            (self.center[0]-100, self.center[1]), 
+            btn2player_pos, 
             200, 50, 
-            Text((self.center[0]-100, self.center[1]), "Player - Player", 32))
+            Text(btn2player_pos, "Player - Player", 32))
         self.btnBotPlayer = Button(
-            (self.center[0]-100, self.center[1] + 100), 
+            btnbotplayer_pos, 
             200, 50, 
-            Text((self.center[0]-100, self.center[1] + 100), "Bot - Player", 32))
+            Text(btnbotplayer_pos, "Bot - Player", 32))
 
 
         self.btn2Player.set_callback(
@@ -34,12 +38,8 @@ class HomeScene:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 a = self.btn2Player.check_click(event.pos)
                 b = self.btnBotPlayer.check_click(event.pos)
-                global p2b
-                if a:
-                    p2b = False
-                if b: 
-                    p2b = True
                 self.next_scene = a or b
+
     def on_loop(self):
         if self.next_scene:
             self._running = False

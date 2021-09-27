@@ -31,12 +31,12 @@ class WinnerScene:
         # make center
         self.txWinner.pos = (self.txWinner.pos[0] - self.txWinner.get_rect().w / 2, self.txWinner.pos[1])
         self.txScore.pos = (self.txScore.pos[0] - self.txScore.get_rect().w / 2, self.txScore.pos[1])
-        global p2b
+
         self.btnBack.set_callback(
             lambda: HomeScene()
         )
         self.btnAgain.set_callback(
-            lambda: App(p2b)
+            lambda: App(self.post_game.p2b)
         )
 
     def on_event(self, events):
