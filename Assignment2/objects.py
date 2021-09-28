@@ -102,7 +102,7 @@ class Ball:
         self.swirling = False
         self.vx_swirling = 0
 
-        self.hit = load_sound("hit.mp3")
+        self.hit = load_sound("hit.wav")
 
         # index 0 for speed up item
         # index 1 for swirl item

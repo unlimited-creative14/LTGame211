@@ -289,7 +289,7 @@ class App:
 
 if __name__ == '__main__':
     pygame.init()
-    sound = load_sound("background.mp3")
+    sound = load_sound("background.wav")
     sound.play(loops=-1)
     sound.set_volume(0.4)
 
