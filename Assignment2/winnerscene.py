@@ -5,7 +5,6 @@ from game import App
 
 class WinnerScene:
     def __init__(self, post_game):
-        pygame.init()
         self._running = True
         self.size = self.width, self.height = 400, 800
         self.post_game = post_game
@@ -22,12 +21,12 @@ class WinnerScene:
         self.btnBack = Button(
             btnback_pos, 
             100, 50, 
-            Text((btnback_pos[0] + 25, btnback_pos[1] + 15), "Back", 25, color=(232,215,42)),
+            Text((btnback_pos[0] , btnback_pos[1] ), "Back", 25, color=(232,215,42)),
             color=(83,35,222))
         self.btnAgain = Button(
             btnagain_pos, 
             100, 50, 
-            Text((btnagain_pos[0] + 25, btnagain_pos[1] + 15), "Again", 25, color=(232,215,42)),
+            Text((btnagain_pos[0] , btnagain_pos[1] ), "Again", 25, color=(232,215,42)),
             color=(83,35,222))
 
         # make center

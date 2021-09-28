@@ -3,12 +3,6 @@ import pygame
 from game import App
 class HomeScene:
     def __init__(self):
-        pygame.init()
-        # setting sound
-        self.sound = load_sound("background.mp3")
-        self.sound.play(loops=-1)
-        self.sound.set_volume(0.4)
-
         self._running = True
         self.size = self.width, self.height = 400, 800
         self.center = (self.width/2, self.height/2)
@@ -17,20 +11,23 @@ class HomeScene:
         self.next_scene = None
 
     def on_init(self):
-
         self.title = Text((self.center[0] - 100, self.center[1] - 150),
         "Tennis", 100, color=(232,215,42)
         )
 
+        w, h = 200, 50
+        btn2player_pos = (self.center[0]-w/2, self.center[1])
+        btnbotplayer_pos = (self.center[0]-w/2, self.center[1] + 100)
+
         self.btn2Player =  Button(
-            (self.center[0] - 100, self.center[1] - 25), 
+            btn2player_pos, 
             200, 50, 
-            Text((self.center[0]-80, self.center[1] - 15), "Player - Player", 32, color=(232,215,42)),
+            Text(btn2player_pos, "Player - Player", 32, color=(232,215,42)),
             color=(83,35,222))
         self.btnBotPlayer = Button(
-            (self.center[0]-100, self.center[1] + 75), 
+            btnbotplayer_pos, 
             200, 50, 
-            Text((self.center[0]-80, self.center[1] + 85), "Bot - Player", 32, color=(232,215,42)),
+            Text(btnbotplayer_pos, "Bot - Player", 32, color=(232,215,42)),
             color=(83,35,222))
 
 
@@ -47,6 +44,7 @@ class HomeScene:
                 a = self.btn2Player.check_click(event.pos)
                 b = self.btnBotPlayer.check_click(event.pos)
                 self.next_scene = a or b
+
     def on_loop(self):
         if self.next_scene:
             self._running = False

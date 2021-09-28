@@ -12,7 +12,6 @@ import random
 class App:
     def __init__(self, p2b):
         self.p2b = p2b
-
         self._running = True
         self.size = self.width, self.height = 400, 800
         self.player_speed = 200
@@ -29,7 +28,6 @@ class App:
         self.win_point = 10
 
     def on_init(self):
-        pygame.init()
         self.last_frame_tick = pygame.time.get_ticks()/1000
 
         self.player1 = Player(self._display_surf, Transform(Point2D(200, 100), 180), 90, 0.2, 0.1, 1)
@@ -290,6 +288,11 @@ class App:
 
 
 if __name__ == '__main__':
+    pygame.init()
+    sound = load_sound("background.mp3")
+    sound.play(loops=-1)
+    sound.set_volume(0.4)
+
     app = homescene.HomeScene()
     app.on_execute()
         

@@ -220,7 +220,7 @@ class Ball:
         elif collider.obj_type == "wall":
             if self.swirling:
                 return 0
-                
+
             if abs(collider.transform.position.y - self.transform.position.y) / (collider.height/2) > 0.95:
                 self.velocity.y = -self.velocity.y
             else:
@@ -304,11 +304,11 @@ class Text:
         font = pygame.font.Font(os.path.join(GAME_FOLDER, "..", "fonts/bubble_shine/BubbleShine.ttf"), self.size)
         return font.render(self.txt, True, self.color).get_rect()
     
-    def draw(self, surface):
+    def draw(self, surface, offset=(0,0)):
         font = pygame.font.Font(os.path.join(GAME_FOLDER, "..", "fonts/bubble_shine/BubbleShine.ttf"), self.size)
         lb = font.render(self.txt, True, self.color)
 
-        surface.blit(lb, self.pos)
+        surface.blit(lb, (self.pos[0]+offset[0], self.pos[1] + offset[1]))
 
 class Block:
     def __init__(self, transfrom: Transform, width, height, owner, start_tick):
@@ -367,4 +367,4 @@ class Button:
 
     def draw(self, surface):
         pygame.draw.rect(surface, self.color, pygame.Rect(self.pos, (self.w,self.h)))
-        self.txt.draw(surface)
+        self.txt.draw(surface, (self.w/2-self.txt.get_rect().w/2, self.h/2-self.txt.get_rect().h/2))
