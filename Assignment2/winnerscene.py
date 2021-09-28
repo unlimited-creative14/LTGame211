@@ -15,28 +15,29 @@ class WinnerScene:
         self.next_scene = None
 
     def on_init(self):
-        self.txWinner = Text((self.center[0], self.center[1] - 120),"Winner: " + self.post_game.winner, 40)
-        self.txScore = Text((self.center[0], self.center[1] - 50),"%d - %d" % (self.post_game.score1.count, self.post_game.score2.count), 36)
-        btnback_pos = (self.center[0]+20, self.center[1])
-        btnagain_pos = (self.center[0]-100, self.center[1])
+        self.txWinner = Text((self.center[0], self.center[1] - 120),"Winner: " + self.post_game.winner, 40, color=(232,215,42))
+        self.txScore = Text((self.center[0], self.center[1] - 50),"%d - %d" % (self.post_game.score1.count, self.post_game.score2.count), 36, color=(232,215,42))
+        btnback_pos = (self.center[0]+ 20, self.center[1])
+        btnagain_pos = (self.center[0] - 100, self.center[1])
         self.btnBack = Button(
             btnback_pos, 
             100, 50, 
-            Text(btnback_pos, "Back", 25))
+            Text((btnback_pos[0] + 25, btnback_pos[1] + 15), "Back", 25, color=(232,215,42)),
+            color=(83,35,222))
         self.btnAgain = Button(
             btnagain_pos, 
             100, 50, 
-            Text(btnagain_pos, "Again", 25))
+            Text((btnagain_pos[0] + 25, btnagain_pos[1] + 15), "Again", 25, color=(232,215,42)),
+            color=(83,35,222))
 
         # make center
         self.txWinner.pos = (self.txWinner.pos[0] - self.txWinner.get_rect().w / 2, self.txWinner.pos[1])
         self.txScore.pos = (self.txScore.pos[0] - self.txScore.get_rect().w / 2, self.txScore.pos[1])
-        global p2b
         self.btnBack.set_callback(
             lambda: HomeScene()
         )
         self.btnAgain.set_callback(
-            lambda: App(p2b)
+            lambda: App(self.post_game.p2b)
         )
 
     def on_event(self, events):

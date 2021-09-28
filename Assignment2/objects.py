@@ -1,7 +1,7 @@
 import math
 import pygame.time
 from utils.collision import CircleCollier, BoxCollider
-from utils.load_assets import load_img
+from utils.load_assets import *
 from utils.transform import *
 
 
@@ -62,7 +62,7 @@ class Player:
         return "bot" if self.is_bot else self.obj_type
 
     def draw(self):
-        lbpname = Text((self.transform.position.x - 10, self.transform.position.y-60), self.get_player_name(), 20)
+        lbpname = Text((self.transform.position.x - 15, self.transform.position.y-70), self.get_player_name(), 20)
         lbpname.draw(self._surface)
         if self.is_hitting:
             self._surface.blit(self.hits[self.hit_index][0],
@@ -101,6 +101,8 @@ class Ball:
 
         self.swirling = False
         self.vx_swirling = 0
+
+        self.hit = load_sound("hit.mp3")
 
         # index 0 for speed up item
         # index 1 for swirl item
@@ -196,6 +198,9 @@ class Ball:
                 self.vx_swirling = x_value
                 self.is_flying = True
                 self.last_hit = "player1"
+                self.hit.stop()
+                self.hit.play()
+
 
         # player 2 hit a ball
         elif collider.obj_type == "player2":
@@ -207,14 +212,21 @@ class Ball:
                 self.vx_swirling = x_value
                 self.is_flying = True
                 self.last_hit = "player2"
+                self.hit.stop()
+                self.hit.play()
+
 
         # collision with the wall
         elif collider.obj_type == "wall":
-            if abs(self.velocity.x) < 20:
+            if self.swirling:
+                return 0
+                
+            if abs(collider.transform.position.y - self.transform.position.y) / (collider.height/2) > 0.95:
                 self.velocity.y = -self.velocity.y
             else:
                 self.velocity.x = -self.velocity.x
             self.hitted = True
+
         elif collider.obj_type == "deadwall":
             self.velocity = Point2D(0,0)
             self.dead = True
@@ -280,19 +292,21 @@ class Score:
         surface.blit(lb, newpos)
 
 class Text:
-    def __init__(self, pos, text, size):
+    def __init__(self, pos, text, size, color=(255, 255, 255)):
         self.pos = pos
         self.txt = text
         self.size = size
+        self.color = color
     def set_text(self, text):
         self.txt = text
+
     def get_rect(self):
-        font = pygame.font.SysFont("anyfont", self.size)
-        return font.render(self.txt, True, (255,255,255)).get_rect()
+        font = pygame.font.Font(os.path.join(GAME_FOLDER, "..", "fonts/bubble_shine/BubbleShine.ttf"), self.size)
+        return font.render(self.txt, True, self.color).get_rect()
     
     def draw(self, surface):
-        font = pygame.font.SysFont("anyfont", self.size)
-        lb = font.render(self.txt, True, (255,255,255))
+        font = pygame.font.Font(os.path.join(GAME_FOLDER, "..", "fonts/bubble_shine/BubbleShine.ttf"), self.size)
+        lb = font.render(self.txt, True, self.color)
 
         surface.blit(lb, self.pos)
 
@@ -333,11 +347,12 @@ class Item:
             surface.blit(self.swirl_img, self.swirl_rect.move(self.transform.position.x - 25, self.transform.position.y - 25))
             
 class Button:
-    def __init__(self, pos,w,h, txt:Text):
+    def __init__(self, pos,w,h, txt:Text, color=(0, 0, 0)):
         self.txt = txt
         self.pos = pos
         self.w, self.h = w,h
         self.cb = None
+        self.color = color
 
     def check_click(self, click_pos):
         if self.pos[0] > click_pos[0] or self.pos[0] + self.w < click_pos[0]:
@@ -346,8 +361,10 @@ class Button:
             return False
         print("%s clicked" % self.txt.txt)
         return self.cb()
+
     def set_callback(self, cb):
         self.cb = cb
+
     def draw(self, surface):
-        pygame.draw.rect(surface,(0,0,0), pygame.Rect(self.pos, (self.w,self.h)))
+        pygame.draw.rect(surface, self.color, pygame.Rect(self.pos, (self.w,self.h)))
         self.txt.draw(surface)

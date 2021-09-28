@@ -26,7 +26,7 @@ class App:
         # GameEnd
         self.winner = "None"
 
-        self.win_point = 3
+        self.win_point = 10
 
     def on_init(self):
         pygame.init()
@@ -49,6 +49,7 @@ class App:
 
         self.items = []
         self.block = None
+        self.block_index = 0
         
         # spatial hashmap collision
         self.spatial_hashmap = SpatialHashmap(self.width, self.height, 10)
@@ -76,8 +77,8 @@ class App:
         self.player2.draw()
         self.ball.draw()
 
-        self.left_wall.draw(self._display_surf)
-        self.right_wall.draw(self._display_surf)
+        # self.left_wall.draw(self._display_surf)
+        # self.right_wall.draw(self._display_surf)
 
         self.score1.draw(self._display_surf)
         self.score2.draw(self._display_surf)
@@ -168,6 +169,7 @@ class App:
             self.spatial_hashmap.append_obj(self.block)
             # reset start random time
             self.start_random_item = current_time
+            self.block_index = self.spatial_hashmap.length() - 1
 
         elif collsion_result in [2, 3]:
             # remove speed up item
@@ -181,7 +183,10 @@ class App:
 
         if self.ball.dead:
             self.ball.dead = False
-            self.block = None
+            # remove block collider
+            # if self.block != None:
+            #     self.block = None
+            #     self.spatial_hashmap.pop_index(self.block_index)
 
             if self.ball.last_hit == "player1":
                 if self.ball.transform.position.y > self.y_center:
